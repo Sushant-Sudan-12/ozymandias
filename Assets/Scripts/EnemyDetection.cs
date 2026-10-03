@@ -28,12 +28,43 @@ public class EnemyDetection : MonoBehaviour
         BlockedByWall
     }
 
-    [Header("Enemy Behavior Type (Stationary Ghost / Moving)")]
-    [Tooltip("If true, this enemy/ghost stays completely stationary in place. It detects the player and fades the screen, but does not move along waypoints or chase.")]
+    public enum BehaviorType
+    {
+        [Tooltip("Patrols along designated waypoints (A -> B -> C...).")]
+        PatrolWaypoints,
+
+        [Tooltip("Completely stationary in place. Detects player and fades screen without moving.")]
+        StationaryGhost,
+
+        [Tooltip("Random Collision: Moves forward until colliding directly with a wall, then turns into a new open direction and continues. Chases player whenever detected.")]
+        RandomCollision
+    }
+
+    [Header("Enemy Behavior Type (Stationary / Waypoints / Random Collision)")]
+    [Tooltip("Behavior mode for this enemy: PatrolWaypoints, StationaryGhost, or RandomCollision.")]
+    [SerializeField] private BehaviorType behaviorType = BehaviorType.PatrolWaypoints;
+
+    [Tooltip("Legacy fallback for stationary ghost. If true, overrides behavior to StationaryGhost.")]
     [SerializeField] private bool isStationary = false;
 
     [Tooltip("If stationary, whether the ghost rotates to face the player while detecting them.")]
     [SerializeField] private bool rotateToFacePlayerWhileStationary = true;
+
+    [Header("Random Collision Mode Settings")]
+    [Tooltip("Normal movement speed in RandomCollision wandering mode.")]
+    [SerializeField] private float randomPatrolSpeed = 3.2f;
+
+    [Tooltip("Pause duration (in seconds) when hitting a wall in RandomCollision mode before setting off in new direction.")]
+    [SerializeField] private float randomWallBounceWaitTime = 0.05f;
+
+    [Tooltip("Minimum duration (in seconds) to walk in a chosen direction before picking a fresh angle.")]
+    [SerializeField] private float minRandomWanderDuration = 3.0f;
+
+    [Tooltip("Maximum duration (in seconds) to walk in a chosen direction before picking a fresh angle.")]
+    [SerializeField] private float maxRandomWanderDuration = 7.0f;
+
+    [Tooltip("Angular spread in degrees when bouncing off a wall (e.g. 120 degrees).")]
+    [SerializeField] private float bounceAngleSpread = 120f;
 
     [Header("Patrol & Waypoints (A, B, C, D...) - Active if Not Stationary")]
     [Tooltip("List of waypoint transforms to patrol between (e.g. A and B, or A, B, C, D).")]
@@ -43,44 +74,19 @@ public class EnemyDetection : MonoBehaviour
     [SerializeField] private PatrolType patrolType = PatrolType.PingPong;
 
     [Tooltip("Normal patrol movement speed between A and B.")]
-    [SerializeField] private float patrolSpeed = 2.0f;
+    [SerializeField] private float patrolSpeed = 3.5f;
 
     [Tooltip("Distance threshold to consider a waypoint reached.")]
     [SerializeField] private float waypointReachDistance = 0.35f;
 
     [Tooltip("Pause duration (in seconds) upon reaching each waypoint.")]
-    [SerializeField] private float waitTimeAtWaypoint = 0.6f;
+    [SerializeField] private float waitTimeAtWaypoint = 0.4f;
 
-    [Tooltip("Speed at which the 3D enemy rotates to face movement direction or the player.")]
-    [SerializeField] private float rotationSpeed = 14f;
+    [Tooltip("Speed multiplier at which the 3D enemy rotates to face movement direction or the player.")]
+    [SerializeField] private float rotationSpeed = 25f;
 
-    [Header("Dual Detection Zones")]
-    [Tooltip("Forward vision cone detection radius (far zone in front of enemy).")]
-    [SerializeField] private float detectionRadius = 7f;
-
-    [Tooltip("Close 360-degree proximity circle around enemy. If player is within this radius in ANY direction, they are spotted.")]
-    [SerializeField] private float proximityRadius = 1.2f;
-
-    [Tooltip("Enable conical field of view for the forward zone. (Proximity radius is always 360 degrees).")]
-    [SerializeField] private bool useFieldOfView = true;
-
-    [Tooltip("Field of view angle in degrees for the forward cone (e.g., 100 degrees in front).")]
-    [Range(10f, 360f)]
-    [SerializeField] private float viewAngle = 100f;
-
-    [Header("Detection Timer & Screen Fade")]
-    [Tooltip("Continuous sight duration (in seconds) before full detection and player death. (FadeScreen transitions 0 to 1 over this time).")]
-    [SerializeField] private float detectionTimeRequired = 2.0f;
-
-    [Tooltip("Whether to reload the active scene upon player death.")]
-    [SerializeField] private bool reloadSceneOnDeath = true;
-
-    [Header("Player Chase (When Moving Enemy is Detected)")]
-    [Tooltip("Chase speed when player is detected (faster than normal patrol speed). Ignored if isStationary is true.")]
-    [SerializeField] private float chaseSpeed = 3.5f;
-
-    [Tooltip("Stopping distance from player when reaching them.")]
-    [SerializeField] private float chaseStopDistance = 0.9f;
+    [Tooltip("Crisp turn speed in degrees per second (e.g. 850 = 180° turn in 0.21s, 1200 = 180° turn in 0.15s).")]
+    [SerializeField] private float turnDegreesPerSecond = 850f;
 
     [Header("Wall Collision / Anti-Clipping Settings")]
     [Tooltip("Distance ahead to probe for walls/obstacles blocking movement.")]
@@ -90,7 +96,7 @@ public class EnemyDetection : MonoBehaviour
     [SerializeField] private float wallProbeRadius = 0.35f;
 
     [Tooltip("Brief pause (in seconds) when hitting a dynamic wall before turning around to return.")]
-    [SerializeField] private float turnAroundWaitTime = 0.35f;
+    [SerializeField] private float turnAroundWaitTime = 0.05f;
 
     [Header("Obstacle & Raycast Settings")]
     [Tooltip("LayerMask for obstacles (trees, walls, maze barriers) that block vision and movement.")]
@@ -147,11 +153,19 @@ public class EnemyDetection : MonoBehaviour
     private float _waitTimer = 0f;
     private float _blockedTimer = 0f;
 
+    // Waypoint Obstacle Retreat & Retry
+    private bool _isRetreatingFromWall = false;
+    private int _retryTargetWaypointIndex = -1;
+
     private float _currentDetectionTimer = 0f;
     private bool _isPlayerInSight = false;
     private bool _isPlayerDetected = false;
     private RaycastHit _lastObstacleHit;
     private bool _hadObstacleHit = false;
+
+    // Random Collision Wandering State
+    private Vector3 _currentRandomDirection = Vector3.forward;
+    private float _randomWanderTimer = 0f;
 
     // Animator Hashes
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
@@ -159,7 +173,8 @@ public class EnemyDetection : MonoBehaviour
     private static readonly int IsChasingHash = Animator.StringToHash("IsChasing");
 
     // Public Getters
-    public bool IsStationary => isStationary;
+    public BehaviorType EffectiveBehaviorType => isStationary ? BehaviorType.StationaryGhost : behaviorType;
+    public bool IsStationary => EffectiveBehaviorType == BehaviorType.StationaryGhost;
     public EnemyState CurrentState => _currentState;
     public bool IsPlayerInSight => _isPlayerInSight;
     public bool IsPlayerDetected => _isPlayerDetected;
@@ -206,6 +221,12 @@ public class EnemyDetection : MonoBehaviour
 
         if (fadeScreenCanvasGroup != null) s_SharedCanvasGroup = fadeScreenCanvasGroup;
         if (fadeScreenImage != null) s_SharedImage = fadeScreenImage;
+
+        _currentRandomDirection = transform.forward;
+        _currentRandomDirection.y = 0f;
+        if (_currentRandomDirection.sqrMagnitude < 0.001f) _currentRandomDirection = Vector3.forward;
+        _currentRandomDirection.Normalize();
+        _randomWanderTimer = UnityEngine.Random.Range(minRandomWanderDuration, maxRandomWanderDuration);
 
         EnsurePlayerReference();
         ResolveSharedFadeScreen();
@@ -411,10 +432,12 @@ public class EnemyDetection : MonoBehaviour
 
     private void UpdateBehaviorAndMovement()
     {
+        BehaviorType currentBehavior = EffectiveBehaviorType;
+
         // =========================================================================
-        // SPECIAL MODE: STATIONARY GHOST (Does not move or chase, only detects & fades)
+        // MODE 1: STATIONARY GHOST (Does not move or chase, only detects & fades)
         // =========================================================================
-        if (isStationary)
+        if (currentBehavior == BehaviorType.StationaryGhost)
         {
             if (_isPlayerInSight && playerTarget != null)
             {
@@ -438,12 +461,11 @@ public class EnemyDetection : MonoBehaviour
             return;
         }
 
-        // =========================================================================
-        // MOVING ENEMY: CHASE & PATROL
-        // =========================================================================
         Vector3 moveVelocity = Vector3.zero;
 
-        // --- CASE 1: PLAYER DETECTED -> LEAVE A-B PATH & CHASE PLAYER (FASTER SPEED) ---
+        // =========================================================================
+        // CHASE MODE: SIGHT ACTIVE ON MOVING ENEMY (Both Waypoints & RandomCollision)
+        // =========================================================================
         if (_isPlayerInSight && playerTarget != null)
         {
             _currentState = EnemyState.ChasingPlayer;
@@ -455,11 +477,12 @@ public class EnemyDetection : MonoBehaviour
 
             if (distToPlayer > chaseStopDistance)
             {
-                Vector3 moveDir = diff.normalized;
-                RotateTowards(moveDir);
+                Vector3 desiredDir = diff.normalized;
+                Vector3 steeredDir = GetSteeredMoveDirection(desiredDir, distToPlayer, out _);
 
-                // Anti-clipping: Probe forward before moving towards player to ensure no wall is penetrated
-                Vector3 desiredVelocity = moveDir * chaseSpeed;
+                RotateTowards(steeredDir);
+
+                Vector3 desiredVelocity = steeredDir * chaseSpeed;
                 moveVelocity = PreventWallClipping(desiredVelocity);
             }
             else
@@ -469,7 +492,73 @@ public class EnemyDetection : MonoBehaviour
                 moveVelocity = Vector3.zero;
             }
         }
-        // --- CASE 2: NORMAL PATROL PATH MOVEMENT (Sight broken / wall / out of range) ---
+        // =========================================================================
+        // MODE 2: RANDOM COLLISION (Wanders, bounces off walls, chases on sight)
+        // =========================================================================
+        else if (currentBehavior == BehaviorType.RandomCollision)
+        {
+            // Handle wall bounce pause
+            if (_blockedTimer > 0f)
+            {
+                _currentState = EnemyState.BlockedByWall;
+                _blockedTimer -= Time.deltaTime;
+                moveVelocity = Vector3.zero;
+
+                if (_currentRandomDirection.sqrMagnitude > 0.001f)
+                {
+                    RotateTowards(_currentRandomDirection, 1.5f);
+                }
+            }
+            else
+            {
+                _currentState = EnemyState.Patrolling;
+
+                // Ensure initial direction
+                if (_currentRandomDirection.sqrMagnitude < 0.001f)
+                {
+                    _currentRandomDirection = transform.forward;
+                    _currentRandomDirection.y = 0f;
+                    if (_currentRandomDirection.sqrMagnitude < 0.001f) _currentRandomDirection = Vector3.forward;
+                    _currentRandomDirection.Normalize();
+                }
+
+                _randomWanderTimer -= Time.deltaTime;
+                if (_randomWanderTimer <= 0f)
+                {
+                    _randomWanderTimer = UnityEngine.Random.Range(minRandomWanderDuration, maxRandomWanderDuration);
+                    float wanderOffset = UnityEngine.Random.Range(-45f, 45f);
+                    Vector3 newDir = Quaternion.Euler(0f, wanderOffset, 0f) * _currentRandomDirection;
+                    newDir.y = 0f;
+                    if (newDir.sqrMagnitude > 0.001f && IsDirectionClear(newDir.normalized, wallProbeDistance * 1.5f, out _))
+                    {
+                        _currentRandomDirection = newDir.normalized;
+                    }
+                }
+
+                // Check if directly blocked ahead or if we can steer slightly through narrow paths
+                Vector3 steeredDir = GetSteeredMoveDirection(_currentRandomDirection, wallProbeDistance, out bool isCompletelyBlocked);
+
+                if (isCompletelyBlocked)
+                {
+                    // Directly collided with a wall in front -> bounce and turn
+                    RaycastHit obstacleHit;
+                    IsDirectionClear(_currentRandomDirection, wallProbeDistance, out obstacleHit);
+                    HandleRandomCollision(obstacleHit.normal);
+                    moveVelocity = Vector3.zero;
+                }
+                else
+                {
+                    _currentRandomDirection = steeredDir;
+                    RotateTowards(steeredDir);
+
+                    Vector3 desiredVelocity = steeredDir * randomPatrolSpeed;
+                    moveVelocity = PreventWallClipping(desiredVelocity);
+                }
+            }
+        }
+        // =========================================================================
+        // MODE 3: WAYPOINTS PATROL (A -> B -> C...)
+        // =========================================================================
         else
         {
             CleanWaypointsList();
@@ -482,6 +571,17 @@ public class EnemyDetection : MonoBehaviour
                     _currentState = EnemyState.BlockedByWall;
                     _blockedTimer -= Time.deltaTime;
                     moveVelocity = Vector3.zero;
+
+                    // Continuously rotate away from the wall towards the return waypoint
+                    if (waypoints.Count > _currentWaypointIndex && waypoints[_currentWaypointIndex] != null)
+                    {
+                        Vector3 returnDiff = waypoints[_currentWaypointIndex].position - transform.position;
+                        returnDiff.y = 0f;
+                        if (returnDiff.sqrMagnitude > 0.001f)
+                        {
+                            RotateTowards(returnDiff.normalized, 1.5f);
+                        }
+                    }
                 }
                 // Handle wait at reached waypoint
                 else if (_waitTimer > 0f)
@@ -490,9 +590,16 @@ public class EnemyDetection : MonoBehaviour
                     _waitTimer -= Time.deltaTime;
                     moveVelocity = Vector3.zero;
 
-                    if (_waitTimer <= 0f)
+                    // Actively turn to face the next destination waypoint while waiting!
+                    Transform targetWp = waypoints[_currentWaypointIndex];
+                    if (targetWp != null)
                     {
-                        AdvanceToNextWaypoint();
+                        Vector3 diff = targetWp.position - transform.position;
+                        diff.y = 0f;
+                        if (diff.sqrMagnitude > 0.001f)
+                        {
+                            RotateTowards(diff.normalized);
+                        }
                     }
                 }
                 // Actively moving to target waypoint along A-B path
@@ -513,23 +620,37 @@ public class EnemyDetection : MonoBehaviour
                         {
                             _previousWaypointIndex = _currentWaypointIndex;
                             _waitTimer = waitTimeAtWaypoint;
+                            AdvanceToNextWaypoint();
                             moveVelocity = Vector3.zero;
+
+                            // Begin rotating to face the next waypoint immediately upon reaching this point
+                            Transform newTargetWp = waypoints[_currentWaypointIndex];
+                            if (newTargetWp != null)
+                            {
+                                Vector3 nextDiff = newTargetWp.position - transform.position;
+                                nextDiff.y = 0f;
+                                if (nextDiff.sqrMagnitude > 0.001f)
+                                {
+                                    RotateTowards(nextDiff.normalized, 1.5f);
+                                }
+                            }
                         }
                         else
                         {
-                            Vector3 moveDir = diff.normalized;
-                            RotateTowards(moveDir);
+                            Vector3 desiredDir = diff.normalized;
+                            Vector3 steeredDir = GetSteeredMoveDirection(desiredDir, dist, out bool isCompletelyBlocked);
 
-                            // Check if a dynamic wall has appeared between current pos and target waypoint
-                            if (IsPathBlockedByWall(moveDir, dist))
+                            if (isCompletelyBlocked)
                             {
+                                // Only turn back if the path is directly and completely blocked
                                 HandleWallEncounter();
                                 moveVelocity = Vector3.zero;
                             }
                             else
                             {
-                                // Move at normal patrol speed with wall clipping prevention
-                                Vector3 desiredVelocity = moveDir * patrolSpeed;
+                                RotateTowards(steeredDir);
+
+                                Vector3 desiredVelocity = steeredDir * patrolSpeed;
                                 moveVelocity = PreventWallClipping(desiredVelocity);
                             }
                         }
@@ -540,12 +661,23 @@ public class EnemyDetection : MonoBehaviour
             {
                 Vector3 diff = waypoints[0].position - transform.position;
                 diff.y = 0f;
-                if (diff.magnitude > waypointReachDistance)
+                float dist = diff.magnitude;
+
+                if (dist > waypointReachDistance)
                 {
-                    Vector3 moveDir = diff.normalized;
-                    RotateTowards(moveDir);
-                    Vector3 desiredVelocity = moveDir * patrolSpeed;
-                    moveVelocity = PreventWallClipping(desiredVelocity);
+                    Vector3 desiredDir = diff.normalized;
+                    Vector3 steeredDir = GetSteeredMoveDirection(desiredDir, dist, out bool isCompletelyBlocked);
+
+                    if (!isCompletelyBlocked)
+                    {
+                        RotateTowards(steeredDir);
+                        Vector3 desiredVelocity = steeredDir * patrolSpeed;
+                        moveVelocity = PreventWallClipping(desiredVelocity);
+                    }
+                    else
+                    {
+                        moveVelocity = Vector3.zero;
+                    }
                 }
                 else
                 {
@@ -625,12 +757,141 @@ public class EnemyDetection : MonoBehaviour
         return desiredVelocity;
     }
 
-    private void RotateTowards(Vector3 direction)
+    private void RotateTowards(Vector3 direction, float speedMultiplier = 1f)
     {
         if (direction.sqrMagnitude < 0.001f) return;
         direction.y = 0f;
         Quaternion targetRot = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        float degSpeed = Mathf.Max(turnDegreesPerSecond, rotationSpeed * 40f) * speedMultiplier;
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, degSpeed * Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Intelligently steers towards targetDirection by evaluating direct line-of-sight first.
+    /// If slightly obstructed by a side wall/corner in narrow pathways, tests small angle offsets
+    /// (±15°, ±30°, ±45°, ±60°) to shift around obstacles. Only flags isCompletelyBlocked if every forward angle is blocked.
+    /// </summary>
+    private Vector3 GetSteeredMoveDirection(Vector3 targetDirection, float checkDist, out bool isCompletelyBlocked)
+    {
+        isCompletelyBlocked = false;
+        if (targetDirection.sqrMagnitude < 0.001f) return Vector3.zero;
+
+        targetDirection.y = 0f;
+        targetDirection.Normalize();
+
+        float effectiveDist = Mathf.Min(wallProbeDistance, checkDist);
+
+        // 1. Direct path test
+        if (IsDirectionClear(targetDirection, effectiveDist, out _))
+        {
+            return targetDirection;
+        }
+
+        // 2. Whisker tests for narrow corridor cornering and side-wall shifts
+        float[] testAngles = new float[] { 15f, -15f, 30f, -30f, 45f, -45f, 60f, -60f };
+        for (int i = 0; i < testAngles.Length; i++)
+        {
+            Vector3 shiftedDir = Quaternion.Euler(0f, testAngles[i], 0f) * targetDirection;
+            shiftedDir.y = 0f;
+            shiftedDir.Normalize();
+
+            if (IsDirectionClear(shiftedDir, effectiveDist * 0.9f, out _))
+            {
+                // Verify the shifted direction still makes forward progress towards destination
+                if (Vector3.Dot(shiftedDir, targetDirection) > 0.35f)
+                {
+                    return shiftedDir;
+                }
+            }
+        }
+
+        // 3. If no forward/shifted angle is clear, path is directly and completely blocked
+        isCompletelyBlocked = true;
+        return targetDirection;
+    }
+
+    /// <summary>
+    /// Returns true if a probe in the given direction has no blocking wall colliders within checkDist.
+    /// </summary>
+    private bool IsDirectionClear(Vector3 dir, float checkDist, out RaycastHit obstacleHit)
+    {
+        Vector3 probeOrigin = transform.position + eyeOffset;
+        float dist = Mathf.Max(0.05f, checkDist);
+        int mask = GetEffectiveObstacleMask();
+
+        if (Physics.SphereCast(probeOrigin, wallProbeRadius, dir, out obstacleHit, dist, mask, triggerInteraction))
+        {
+            if (obstacleHit.transform != transform && !obstacleHit.transform.IsChildOf(transform))
+            {
+                if (playerTarget == null || (obstacleHit.transform != playerTarget && !obstacleHit.transform.IsChildOf(playerTarget)))
+                {
+                    return false; // Hit a wall/obstacle
+                }
+            }
+        }
+
+        obstacleHit = default;
+        return true;
+    }
+
+    /// <summary>
+    /// Called when RandomCollision mode encounters a solid wall directly in front.
+    /// Rapidly turns between 90° and 270° away from current forward heading, finds the most open path, and resumes.
+    /// </summary>
+    private void HandleRandomCollision(Vector3 hitNormal)
+    {
+        _currentState = EnemyState.BlockedByWall;
+        _blockedTimer = randomWallBounceWaitTime;
+        _randomWanderTimer = UnityEngine.Random.Range(minRandomWanderDuration, maxRandomWanderDuration);
+
+        Vector3 currentFacing = transform.forward;
+        currentFacing.y = 0f;
+        if (currentFacing.sqrMagnitude < 0.001f) currentFacing = Vector3.forward;
+        currentFacing.Normalize();
+
+        // 1. Pick a random turn angle between 90° and 270° (sharp left, right, or reverse)
+        float baseRandomTurnAngle = UnityEngine.Random.Range(90f, 270f);
+        Vector3 initialCandidate = Quaternion.Euler(0f, baseRandomTurnAngle, 0f) * currentFacing;
+        initialCandidate.y = 0f;
+        initialCandidate.Normalize();
+
+        // 2. Sample across the 90° to 270° arc to find the angle with the longest unobstructed clearance
+        float[] candidateAngles = new float[] { baseRandomTurnAngle, 90f, 135f, 180f, 225f, 270f, -90f, -135f };
+        Vector3 bestDir = initialCandidate;
+        float maxClearDist = 0f;
+
+        Vector3 probeOrigin = transform.position + eyeOffset;
+        int mask = GetEffectiveObstacleMask();
+
+        for (int i = 0; i < candidateAngles.Length; i++)
+        {
+            Vector3 testDir = Quaternion.Euler(0f, candidateAngles[i], 0f) * currentFacing;
+            testDir.y = 0f;
+            testDir.Normalize();
+
+            float clearDist = 15f;
+            if (Physics.SphereCast(probeOrigin, wallProbeRadius, testDir, out RaycastHit hit, 15f, mask, triggerInteraction))
+            {
+                if (hit.transform != transform && !hit.transform.IsChildOf(transform))
+                {
+                    if (playerTarget == null || (hit.transform != playerTarget && !hit.transform.IsChildOf(playerTarget)))
+                    {
+                        clearDist = hit.distance;
+                    }
+                }
+            }
+
+            if (clearDist > maxClearDist)
+            {
+                maxClearDist = clearDist;
+                bestDir = testDir;
+            }
+        }
+
+        _currentRandomDirection = bestDir;
+
+        // Instantly execute rapid rotation towards the new open heading
+        RotateTowards(_currentRandomDirection, 3.0f);
     }
 
     /// <summary>
@@ -656,26 +917,69 @@ public class EnemyDetection : MonoBehaviour
     }
 
     /// <summary>
-    /// Called when a dynamic wall appears blocking the path between waypoints (e.g. between A and B).
-    /// Stops the enemy, turns around at the wall, and returns to the origin waypoint.
+    /// Called when a wall blocks the path between waypoints (e.g. between B and C).
+    /// Turns the enemy around, retreats to origin waypoint (B), and once at B tries going to C again.
     /// </summary>
     private void HandleWallEncounter()
     {
-        // Reverse patrol direction so enemy goes back to previous waypoint
-        _patrolDirection *= -1;
+        _isRetreatingFromWall = true;
+        _retryTargetWaypointIndex = _currentWaypointIndex; // e.g. C
 
-        // Switch target waypoint back to the previous one
-        int temp = _currentWaypointIndex;
-        _currentWaypointIndex = _previousWaypointIndex;
-        _previousWaypointIndex = temp;
+        // Retreat to origin waypoint (e.g. B)
+        int retreatIndex = _previousWaypointIndex;
+        if (retreatIndex < 0 || retreatIndex >= waypoints.Count || retreatIndex == _currentWaypointIndex)
+        {
+            retreatIndex = FindNearestWaypointExcluding(_currentWaypointIndex);
+        }
 
+        _currentWaypointIndex = retreatIndex;
         _blockedTimer = turnAroundWaitTime;
+
+        // Instantly begin rapid rotation towards the retreat destination
+        if (waypoints.Count > _currentWaypointIndex && waypoints[_currentWaypointIndex] != null)
+        {
+            Vector3 returnDiff = waypoints[_currentWaypointIndex].position - transform.position;
+            returnDiff.y = 0f;
+            if (returnDiff.sqrMagnitude > 0.001f)
+            {
+                RotateTowards(returnDiff.normalized, 3.0f);
+            }
+        }
+    }
+
+    private int FindNearestWaypointExcluding(int excludeIndex)
+    {
+        int bestIdx = 0;
+        float minDist = float.MaxValue;
+        for (int i = 0; i < waypoints.Count; i++)
+        {
+            if (i == excludeIndex || waypoints[i] == null) continue;
+            float d = Vector3.Distance(transform.position, waypoints[i].position);
+            if (d < minDist)
+            {
+                minDist = d;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
     }
 
     private void AdvanceToNextWaypoint()
     {
         if (waypoints.Count < 2) return;
 
+        // If we retreated to origin waypoint (B) due to a wall block, now retry the intended target (C)!
+        if (_isRetreatingFromWall && _retryTargetWaypointIndex >= 0 && _retryTargetWaypointIndex < waypoints.Count)
+        {
+            _isRetreatingFromWall = false;
+            _previousWaypointIndex = _currentWaypointIndex;
+            _currentWaypointIndex = _retryTargetWaypointIndex;
+            _retryTargetWaypointIndex = -1;
+            return;
+        }
+
+        _isRetreatingFromWall = false;
+        _retryTargetWaypointIndex = -1;
         _previousWaypointIndex = _currentWaypointIndex;
 
         switch (patrolType)
@@ -925,8 +1229,8 @@ public class EnemyDetection : MonoBehaviour
         if (facing.sqrMagnitude > 0.001f) facing.Normalize();
         else facing = Vector3.forward;
 
-        // 1. Draw Waypoints & Patrol Route (Cyan/Green) if Not Stationary
-        if (!isStationary && waypoints != null && waypoints.Count > 0)
+        // 1. Draw Waypoints & Patrol Route (Cyan/Green) if in PatrolWaypoints mode
+        if (EffectiveBehaviorType == BehaviorType.PatrolWaypoints && waypoints != null && waypoints.Count > 0)
         {
             Gizmos.color = Color.cyan;
             for (int i = 0; i < waypoints.Count; i++)
@@ -953,9 +1257,16 @@ public class EnemyDetection : MonoBehaviour
                 Gizmos.DrawLine(transform.position, waypoints[_currentWaypointIndex].position);
             }
         }
+        else if (EffectiveBehaviorType == BehaviorType.RandomCollision)
+        {
+            // Draw Random Collision Wander Heading
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawRay(enemyEyePos, _currentRandomDirection * (wallProbeDistance * 1.5f));
+            Gizmos.DrawWireSphere(enemyEyePos + _currentRandomDirection * (wallProbeDistance * 1.5f), 0.15f);
+        }
 
         // 2. Draw Forward Wall Probe Ray (Only if not stationary)
-        if (!isStationary)
+        if (EffectiveBehaviorType != BehaviorType.StationaryGhost)
         {
             Gizmos.color = _currentState == EnemyState.BlockedByWall ? Color.magenta : new Color(1f, 0.5f, 0f, 0.6f);
             Gizmos.DrawRay(enemyEyePos, facing * wallProbeDistance);
@@ -963,7 +1274,7 @@ public class EnemyDetection : MonoBehaviour
         }
 
         // 3. Draw Close 360-degree Proximity Circle
-        Gizmos.color = isStationary ? new Color(0.8f, 0.2f, 1f, 0.5f) : new Color(0.2f, 1f, 0.4f, 0.5f);
+        Gizmos.color = EffectiveBehaviorType == BehaviorType.StationaryGhost ? new Color(0.8f, 0.2f, 1f, 0.5f) : new Color(0.2f, 1f, 0.4f, 0.5f);
         DrawWireCircle(transform.position, proximityRadius);
 
         // 4. Draw Forward Detection Radius Circle & Cone

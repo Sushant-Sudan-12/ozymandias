@@ -2370,7 +2370,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &677839810
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3585,10 +3585,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: QE to Rotate
+  m_text: Q E to Rotate
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2259d903c70c17b44b03f38856d53f1b, type: 2}
+  m_sharedMaterial: {fileID: -1168134434572430582, guid: 2259d903c70c17b44b03f38856d53f1b, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4720,7 +4720,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1169464194
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8770,10 +8770,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: WASD to Move
+  m_text: W A S D to Move
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 2d85036bd6f8c1345a95409e455c59ca, type: 2}
+  m_sharedMaterial: {fileID: -3753635287609336707, guid: 2d85036bd6f8c1345a95409e455c59ca, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9330,11 +9330,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8445527363417047426, guid: eed21c525d0833c40b702ecac4647acf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.9999995
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 8445527363417047426, guid: eed21c525d0833c40b702ecac4647acf, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.22975296
+      value: 0.22975293
       objectReference: {fileID: 0}
     - target: {fileID: 8991440111492113268, guid: eed21c525d0833c40b702ecac4647acf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9346,7 +9346,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8991440111492113268, guid: eed21c525d0833c40b702ecac4647acf, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -7.23
+      value: -6.96
       objectReference: {fileID: 0}
     - target: {fileID: 8991440111492113268, guid: eed21c525d0833c40b702ecac4647acf, type: 3}
       propertyPath: m_LocalRotation.w
@@ -9432,6 +9432,10 @@ PrefabInstance:
     - target: {fileID: 1552946670756111029, guid: c3de9c3e89520684dbf244dfefe26358, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7158025916054528752, guid: c3de9c3e89520684dbf244dfefe26358, type: 3}
+      propertyPath: targetSceneName
+      value: Tut
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
