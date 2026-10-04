@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 2228099575528254574}
   - component: {fileID: 5476588794242527433}
   - component: {fileID: 4465528354579433900}
+  - component: {fileID: 2144669517227793273}
   m_Layer: 3
   m_Name: Trees
   m_TagString: Untagged
@@ -157,3 +158,24 @@ MonoBehaviour:
   baseSortingOrder: 5000
   precisionMultiplier: 100
   yPivotOffset: 0
+--- !u!65 &2144669517227793273
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8624582052254364712}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 18.660547, y: 14.657503, z: 0.2}
+  m_Center: {x: 0, y: 5.0712495, z: 0}
