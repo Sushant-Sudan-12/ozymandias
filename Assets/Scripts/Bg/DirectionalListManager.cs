@@ -16,6 +16,13 @@ public class DirectionalListManager : MonoBehaviour
         NorthWest = 7
     }
 
+    public enum TimeState
+    {
+        Past,
+        Present,
+        Future
+    }
+
     [System.Serializable]
     public class DirectionalGroup
     {
@@ -57,16 +64,81 @@ public class DirectionalListManager : MonoBehaviour
     [SerializeField] private float fadeSpeed = 8f;
     [SerializeField] private bool deactivateWhenZero = true;
 
+    [Header("--- Directional Light Rotation (Past / Present / Future) ---")]
+    [Tooltip("The Directional Light in the scene whose Y-rotation lerps when switching between Past, Present, and Future. Auto-finds if unassigned.")]
+    [SerializeField] private Light directionalLight;
+
+    [Tooltip("Enable smooth Y-rotation lerping for the Directional Light.")]
+    [SerializeField] private bool enableLightRotation = true;
+
+    [Tooltip("Target Y rotation (in degrees) for the Directional Light in the Past.")]
+    [SerializeField] private float pastLightYRotation = -45f;
+
+    [Tooltip("Target Y rotation (in degrees) for the Directional Light in the Present.")]
+    [SerializeField] private float presentLightYRotation = 0f;
+
+    [Tooltip("Target Y rotation (in degrees) for the Directional Light in the Future.")]
+    [SerializeField] private float futureLightYRotation = 45f;
+
+    [Range(0.5f, 20f)]
+    [Tooltip("Lerp speed for rotating the Directional Light between states.")]
+    [SerializeField] private float lightLerpSpeed = 5f;
+
+    [Header("Time State Angle Mappings")]
+    [Tooltip("Angles that trigger the Past state (if not using group names).")]
+    [SerializeField] private List<CompassAngle8> pastAngles = new List<CompassAngle8> { CompassAngle8.NorthEast, CompassAngle8.SouthWest };
+
+    [Tooltip("Angles that trigger the Future state (if not using group names).")]
+    [SerializeField] private List<CompassAngle8> futureAngles = new List<CompassAngle8> { CompassAngle8.NorthWest, CompassAngle8.SouthEast };
+
+    [Tooltip("Angles that trigger the Present state.")]
+    [SerializeField] private List<CompassAngle8> presentAngles = new List<CompassAngle8> { CompassAngle8.North, CompassAngle8.East, CompassAngle8.South, CompassAngle8.West };
+
     private DirectionalGroup[] _allGroups = Array.Empty<DirectionalGroup>();
     private readonly List<ObjectEntry> _uniqueObjects = new List<ObjectEntry>();
     private readonly List<SpriteEntry> _uniqueSprites = new List<SpriteEntry>();
 
     private CompassAngle8 _currentCompassDir = CompassAngle8.North;
+    private TimeState _currentTimeState = TimeState.Present;
+
+    private float _cachedLightPitch = 50f;
+    private float _cachedLightRoll = 0f;
+    private float _currentLightY = 0f;
+    private float _targetLightY = 0f;
+
+    public TimeState CurrentTimeState => _currentTimeState;
+    public CompassAngle8 CurrentCompassDir => _currentCompassDir;
 
     private void Awake()
     {
+        InitializeDirectionalLight();
         RebuildRegistry();
         UpdateGroupTargets(CompassAngle8.North, immediate: true);
+    }
+
+    private void InitializeDirectionalLight()
+    {
+        if (directionalLight == null)
+        {
+            Light[] lights = FindObjectsByType<Light>(FindObjectsSortMode.None);
+            for (int i = 0; i < lights.Length; i++)
+            {
+                if (lights[i].type == LightType.Directional)
+                {
+                    directionalLight = lights[i];
+                    break;
+                }
+            }
+        }
+
+        if (directionalLight != null)
+        {
+            Vector3 euler = directionalLight.transform.eulerAngles;
+            _cachedLightPitch = euler.x;
+            _cachedLightRoll = euler.z;
+            _currentLightY = euler.y;
+            _targetLightY = presentLightYRotation;
+        }
     }
 
     private void Update()
@@ -81,6 +153,13 @@ public class DirectionalListManager : MonoBehaviour
 
         // 2. Apply combined max alpha to unique GameObjects and Sprites
         ApplyAllAlphas();
+
+        // 3. Smoothly lerp Directional Light Y rotation between Past, Present, and Future
+        if (enableLightRotation && directionalLight != null)
+        {
+            _currentLightY = Mathf.LerpAngle(_currentLightY, _targetLightY, lightLerpSpeed * Time.deltaTime);
+            directionalLight.transform.rotation = Quaternion.Euler(_cachedLightPitch, _currentLightY, _cachedLightRoll);
+        }
     }
 
     /// <summary>
@@ -224,9 +303,79 @@ public class DirectionalListManager : MonoBehaviour
             }
         }
 
+        // Update target TimeState and Directional Light Y-rotation
+        UpdateTimeStateAndLightTarget(compassDir, immediate);
+
         if (immediate)
         {
             ApplyAllAlphas();
+        }
+    }
+
+    private void UpdateTimeStateAndLightTarget(CompassAngle8 compassDir, bool immediate)
+    {
+        // 1. Check if group names explicitly identify Past / Future
+        bool isPast = false;
+        bool isFuture = false;
+
+        for (int i = 0; i < _allGroups.Length; i++)
+        {
+            var grp = _allGroups[i];
+            if (grp == null || string.IsNullOrEmpty(grp.groupName)) continue;
+
+            bool matchesDir = (grp.primaryCardinal == compassDir) || 
+                              (grp.linkedIntermediate == compassDir) || 
+                              (grp.extraAngles != null && grp.extraAngles.Contains(compassDir));
+
+            if (matchesDir)
+            {
+                if (grp.groupName.IndexOf("Past", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    isPast = true;
+                    break;
+                }
+                else if (grp.groupName.IndexOf("Future", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    isFuture = true;
+                    break;
+                }
+            }
+        }
+
+        // 2. Fallback to configured angle lists if group names did not match
+        if (!isPast && !isFuture)
+        {
+            if (pastAngles != null && pastAngles.Contains(compassDir))
+            {
+                isPast = true;
+            }
+            else if (futureAngles != null && futureAngles.Contains(compassDir))
+            {
+                isFuture = true;
+            }
+        }
+
+        // 3. Resolve target state and light Y rotation
+        if (isPast)
+        {
+            _currentTimeState = TimeState.Past;
+            _targetLightY = pastLightYRotation;
+        }
+        else if (isFuture)
+        {
+            _currentTimeState = TimeState.Future;
+            _targetLightY = futureLightYRotation;
+        }
+        else
+        {
+            _currentTimeState = TimeState.Present;
+            _targetLightY = presentLightYRotation;
+        }
+
+        if (immediate && directionalLight != null)
+        {
+            _currentLightY = _targetLightY;
+            directionalLight.transform.rotation = Quaternion.Euler(_cachedLightPitch, _currentLightY, _cachedLightRoll);
         }
     }
 

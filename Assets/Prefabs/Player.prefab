@@ -60,7 +60,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: 576f8a40589b18645b83ef79fa1b002d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -413,15 +413,14 @@ MonoBehaviour:
   moveSpeed: 6
   gravity: 20
   playerCamera: {fileID: 1534387242891504433}
-  footstepAudioClip: {fileID: 0}
   footstepClips:
   - {fileID: 8300000, guid: 3db1a49b6df6e76498cfc15e0060799b, type: 3}
   - {fileID: 8300000, guid: 3c491bf8aae372e4eae7acb910a9305c, type: 3}
   - {fileID: 8300000, guid: 505e19e41c1b3ce4b91af16a649dcedf, type: 3}
   - {fileID: 8300000, guid: f75efe15735cd38418c36bea7daa29ab, type: 3}
-  continuousWalkingSound: 1
+  fallbackFootstepClip: {fileID: 0}
   stepInterval: 0.5
-  footstepVolume: 0.5
+  footstepVolume: 0.152
   footstepPitch: 1
   pitchVariation: 0.05
   footstepAudioSource: {fileID: 0}
