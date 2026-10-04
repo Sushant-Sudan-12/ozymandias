@@ -12,22 +12,19 @@ public class PlayerMovement : MonoBehaviour
     [Header("Camera Reference")]
     [SerializeField] private Camera playerCamera;
 
-    [Header("Footstep / Walking Audio")]
-    [Tooltip("Audio clip for footstep or continuous walking sound.")]
-    [SerializeField] private AudioClip footstepAudioClip;
-
-    [Tooltip("Optional multiple footstep clips for randomized footsteps (used if discrete steps mode).")]
+    [Header("Footstep Audio (Randomized Clips)")]
+    [Tooltip("List of footstep audio clips to randomly cycle through while walking.")]
     [SerializeField] private AudioClip[] footstepClips;
 
-    [Tooltip("If TRUE: loops a continuous walking sound while moving, and immediately stops when player stops. If FALSE: plays individual footstep sounds at timed intervals.")]
-    [SerializeField] private bool continuousWalkingSound = false;
+    [Tooltip("Fallback single footstep audio clip if list is empty.")]
+    [SerializeField] private AudioClip fallbackFootstepClip;
 
-    [Range(0.05f, 2.0f)]
-    [Tooltip("Time interval (gap in seconds) between footstep sounds when continuous walking sound is unchecked.")]
+    [Range(0.05f, 1.5f)]
+    [Tooltip("Time interval / gap (in seconds) between footsteps while walking.")]
     [SerializeField] private float stepInterval = 0.35f;
 
     [Range(0f, 1f)]
-    [Tooltip("Volume slider for footsteps / walking sound.")]
+    [Tooltip("Volume slider for footstep sounds.")]
     [SerializeField] private float footstepVolume = 0.8f;
 
     [Range(0.5f, 1.5f)]
@@ -45,7 +42,8 @@ public class PlayerMovement : MonoBehaviour
     private DirectionalAnimationEntity _animEntity;
     private Vector3 _verticalVelocity;
     private float _stepTimer = 0f;
-    private bool _wasWalkingLastFrame = false;
+    private bool _isWalkingLastFrame = false;
+    private int _lastClipIndex = -1;
 
     private void Awake()
     {
@@ -75,6 +73,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         footstepAudioSource.playOnAwake = false;
+        footstepAudioSource.loop = false;
         footstepAudioSource.spatialBlend = 0f; // 2D Audio
     }
 
@@ -94,7 +93,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        // Unrestricted movement input
+        // Movement input
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
 
@@ -116,7 +115,7 @@ public class PlayerMovement : MonoBehaviour
             moveDir = (camForward * inputDir.z) + (camRight * inputDir.x);
         }
 
-        // Standard gravity
+        // Gravity
         if (_controller.isGrounded)
         {
             _verticalVelocity.y = -1f;
@@ -135,7 +134,7 @@ public class PlayerMovement : MonoBehaviour
             _animEntity.SetMovement(worldMoveVelocity);
         }
 
-        // Footstep / Walking Audio handling
+        // Footstep Audio handling (discrete randomized footstep clips)
         bool isWalking = _controller.isGrounded && inputDir.sqrMagnitude > 0.001f && worldMoveVelocity.sqrMagnitude > 0.01f;
         HandleFootstepAudio(isWalking);
     }
@@ -146,50 +145,24 @@ public class PlayerMovement : MonoBehaviour
 
         if (isWalking)
         {
-            if (continuousWalkingSound)
+            // If the player just started walking from a complete stop:
+            // Immediately play a new random footstep clip!
+            if (!_isWalkingLastFrame)
             {
-                // Continuous loop walking sound
-                AudioClip clipToPlay = footstepAudioClip != null ? footstepAudioClip : GetRandomFootstepClip();
-                if (clipToPlay != null)
-                {
-                    if (footstepAudioSource.clip != clipToPlay)
-                    {
-                        footstepAudioSource.clip = clipToPlay;
-                    }
-
-                    footstepAudioSource.loop = true;
-                    footstepAudioSource.volume = footstepVolume;
-                    footstepAudioSource.pitch = footstepPitch;
-
-                    if (!footstepAudioSource.isPlaying)
-                    {
-                        footstepAudioSource.Play();
-                    }
-                }
+                PlayRandomFootstepSound();
+                _stepTimer = 0f;
             }
             else
             {
-                // Discrete footstep interval mode
-                if (footstepAudioSource.isPlaying && footstepAudioSource.loop)
-                {
-                    footstepAudioSource.Stop();
-                }
-
-                // If just started walking, play first footstep immediately
-                if (!_wasWalkingLastFrame)
-                {
-                    _stepTimer = stepInterval;
-                }
-
                 _stepTimer += Time.deltaTime;
                 if (_stepTimer >= stepInterval)
                 {
                     _stepTimer = 0f;
-                    PlaySingleFootstepSound();
+                    PlayRandomFootstepSound();
                 }
             }
 
-            _wasWalkingLastFrame = true;
+            _isWalkingLastFrame = true;
         }
         else
         {
@@ -197,12 +170,12 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void PlaySingleFootstepSound()
+    private void PlayRandomFootstepSound()
     {
         AudioClip clip = GetRandomFootstepClip();
-        if (clip == null) clip = footstepAudioClip;
+        if (clip == null) return;
 
-        if (clip != null && footstepAudioSource != null)
+        if (footstepAudioSource != null)
         {
             float pitchOffset = Random.Range(-pitchVariation, pitchVariation);
             footstepAudioSource.pitch = footstepPitch + pitchOffset;
@@ -210,27 +183,40 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Picks a random clip from the list, ensuring the first step and subsequent steps change each time without repeating.
+    /// </summary>
     private AudioClip GetRandomFootstepClip()
     {
         if (footstepClips != null && footstepClips.Length > 0)
         {
-            int index = Random.Range(0, footstepClips.Length);
-            if (footstepClips[index] != null)
+            if (footstepClips.Length == 1)
             {
-                return footstepClips[index];
+                return footstepClips[0] != null ? footstepClips[0] : fallbackFootstepClip;
+            }
+
+            // Pick a random clip index that is different from the last one played
+            int newIndex = Random.Range(0, footstepClips.Length);
+            if (newIndex == _lastClipIndex)
+            {
+                // Shift to a different index to guarantee a fresh clip every step
+                newIndex = (newIndex + Random.Range(1, footstepClips.Length)) % footstepClips.Length;
+            }
+
+            _lastClipIndex = newIndex;
+
+            if (footstepClips[newIndex] != null)
+            {
+                return footstepClips[newIndex];
             }
         }
-        return footstepAudioClip;
+
+        return fallbackFootstepClip;
     }
 
     private void StopFootstepAudio()
     {
-        if (footstepAudioSource != null && footstepAudioSource.isPlaying && footstepAudioSource.loop)
-        {
-            footstepAudioSource.Stop();
-        }
-
-        _stepTimer = stepInterval * 0.9f; // Prime for immediate next step when resuming walk
-        _wasWalkingLastFrame = false;
+        _isWalkingLastFrame = false;
+        _stepTimer = 0f;
     }
 }
