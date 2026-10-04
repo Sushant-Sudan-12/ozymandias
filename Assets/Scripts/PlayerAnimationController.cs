@@ -6,7 +6,7 @@ public class PlayerAnimationController : MonoBehaviour
     [Header("Component References")]
     [SerializeField] private Animator animator;
 
-    // Names of your animation states in the Animator:
+    // 8-Directional Idle States
     // 0: South, 1: South-East, 2: East, 3: North-East,
     // 4: North, 5: North-West, 6: West, 7: South-West
     private readonly string[] _idleStates = new string[]
@@ -15,12 +15,8 @@ public class PlayerAnimationController : MonoBehaviour
         "Idle_N", "Idle_NW", "Idle_W", "Idle_SW"
     };
 
-    private readonly string[] _walkStates = new string[]
-    {
-        "Walk_S", "Walk_SE", "Walk_E", "Walk_NE",
-        "Walk_N", "Walk_NW", "Walk_W", "Walk_SW"
-    };
-
+    // 4-Directional Walk States (Cardinal: South, East, North, West)
+    // Diagonal walking animations (NE, NW, SE, SW) are removed and map to cardinals.
     private int _currentDirection = 0; // Default facing South
     private bool _wasMoving = false;
     private string _currentPlayingState = "";
@@ -64,9 +60,11 @@ public class PlayerAnimationController : MonoBehaviour
             _currentDirection = Get8WayDirectionIndex(input);
         }
 
-        // Determine which animation state to play
+        // Determine which animation state to play:
+        // - Idle uses full 8-way directional states.
+        // - Walk uses 4-way cardinal states (S, E, N, W) with diagonal mapping.
         string targetState = isMoving 
-            ? _walkStates[_currentDirection] 
+            ? Get4WayWalkState(_currentDirection, input)
             : _idleStates[_currentDirection];
 
         // Only trigger Play when the state actually changes
@@ -77,6 +75,33 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         _wasMoving = isMoving;
+    }
+
+    /// <summary>
+    /// Maps 8-way facing direction to one of the 4 cardinal walk states (Walk_S, Walk_E, Walk_N, Walk_W).
+    /// Diagonal directions (NE, NW, SE, SW) resolve to North/East or South/West based on dominant input axis.
+    /// </summary>
+    private string Get4WayWalkState(int dirIndex, Vector2 input)
+    {
+        switch (dirIndex)
+        {
+            case 0: return "Walk_S"; // South
+            case 2: return "Walk_E"; // East
+            case 4: return "Walk_N"; // North
+            case 6: return "Walk_W"; // West
+
+            case 1: // South-East -> South or East
+                return Mathf.Abs(input.x) > Mathf.Abs(input.y) ? "Walk_E" : "Walk_S";
+            case 3: // North-East -> North or East
+                return Mathf.Abs(input.x) > Mathf.Abs(input.y) ? "Walk_E" : "Walk_N";
+            case 5: // North-West -> North or West
+                return Mathf.Abs(input.x) > Mathf.Abs(input.y) ? "Walk_W" : "Walk_N";
+            case 7: // South-West -> South or West
+                return Mathf.Abs(input.x) > Mathf.Abs(input.y) ? "Walk_W" : "Walk_S";
+
+            default:
+                return "Walk_S";
+        }
     }
 
     private int Get8WayDirectionIndex(Vector2 dir)
