@@ -50,10 +50,15 @@ namespace KKK.UI
             {
                 BindButtonListeners();
             }
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
 
         private void Start()
         {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             RefreshContinueButtonVisibility();
         }
 

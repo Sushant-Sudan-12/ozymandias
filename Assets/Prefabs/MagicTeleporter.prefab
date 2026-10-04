@@ -53,8 +53,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.6185832
-  m_Center: {x: 0, y: 0, z: -0.1185832}
+  m_Radius: 0.86729884
+  m_Center: {x: -0.055670023, y: 0, z: -0.1185832}
 --- !u!114 &7158025916054528752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,7 +67,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KKK.MagicCircleTeleporter
-  targetSceneName: Starting
+  targetSceneName: Tut
   durationToTeleport: 1.69
   visualTransform: {fileID: 2545130842010388121}
   initialScale: {x: 0.8, y: 0.8, z: 0.8}

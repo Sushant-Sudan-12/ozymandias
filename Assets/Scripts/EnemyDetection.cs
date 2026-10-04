@@ -261,7 +261,6 @@ public class EnemyDetection : MonoBehaviour
         s_CurrentGlobalScreenAlpha = 0f;
         s_SharedCanvasGroup = null;
         s_SharedImage = null;
-        s_HasSearchedFadeScreen = false;
 
         _controller = GetComponent<CharacterController>();
         if (_controller != null)
@@ -371,28 +370,33 @@ public class EnemyDetection : MonoBehaviour
     /// </summary>
     private void CoordinateSharedScreenFade()
     {
-        if (s_ActiveEnemies.Count == 0 || s_ActiveEnemies[0] != this) return;
-
         float maxProgress = 0f;
-        float shortestDuration = detectionTimeRequired;
 
-        for (int i = 0; i < s_ActiveEnemies.Count; i++)
+        // Clean nulls and find highest detection progress among all active enemies
+        for (int i = s_ActiveEnemies.Count - 1; i >= 0; i--)
         {
-            var enemy = s_ActiveEnemies[i];
-            if (enemy == null) continue;
+            if (s_ActiveEnemies[i] == null)
+            {
+                s_ActiveEnemies.RemoveAt(i);
+                continue;
+            }
 
-            if (enemy._isPlayerInSight)
+            var enemy = s_ActiveEnemies[i];
+            if (enemy.gameObject.activeInHierarchy && enemy._isPlayerInSight)
             {
                 float p = enemy.DetectionProgress;
-                if (p > maxProgress)
-                {
-                    maxProgress = p;
-                    shortestDuration = enemy.detectionTimeRequired;
-                }
+                if (p > maxProgress) maxProgress = p;
             }
         }
 
-        // Case 1: At least one enemy sees the player -> Fade screen starts immediately and tracks detection progress
+        // Also check this enemy instance directly
+        if (_isPlayerInSight)
+        {
+            float p = DetectionProgress;
+            if (p > maxProgress) maxProgress = p;
+        }
+
+        // Apply fade
         if (maxProgress > 0.001f)
         {
             s_CurrentGlobalScreenAlpha = maxProgress;
@@ -411,11 +415,13 @@ public class EnemyDetection : MonoBehaviour
                 }
             }
         }
-        // Case 2: Player escaped / wall introduced -> IMMEDIATELY put fade screen back to alpha 0
         else
         {
-            s_CurrentGlobalScreenAlpha = 0f;
-            ApplyFadeAlpha(0f);
+            if (s_CurrentGlobalScreenAlpha > 0f)
+            {
+                s_CurrentGlobalScreenAlpha = 0f;
+                ApplyFadeAlpha(0f);
+            }
         }
     }
 
@@ -462,8 +468,6 @@ public class EnemyDetection : MonoBehaviour
         }
     }
 
-    private static bool s_HasSearchedFadeScreen = false;
-
     private static void ResolveSharedFadeScreen()
     {
         if (s_SharedCanvasGroup != null || s_SharedImage != null) return;
@@ -483,10 +487,7 @@ public class EnemyDetection : MonoBehaviour
             }
         }
 
-        if (s_HasSearchedFadeScreen) return;
-        s_HasSearchedFadeScreen = true;
-
-        // 2. Fallback: Search for CanvasGroup with 'fade' in name
+        // 2. Check scene CanvasGroups with 'fade' in name
         var allGroups = FindObjectsByType<CanvasGroup>(FindObjectsSortMode.None);
         for (int i = 0; i < allGroups.Length; i++)
         {
@@ -497,15 +498,62 @@ public class EnemyDetection : MonoBehaviour
             }
         }
 
-        // 3. Fallback: Search for Image with 'fade' in name
+        // 3. Check scene Images with 'fade' in name
         var allImages = FindObjectsByType<Image>(FindObjectsSortMode.None);
         for (int i = 0; i < allImages.Length; i++)
         {
             if (allImages[i] != null && allImages[i].gameObject.name.IndexOf("fade", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 s_SharedImage = allImages[i];
+                SetupFadeImageProperties(s_SharedImage);
                 return;
             }
+        }
+
+        // 4. Auto-create dedicated FadeCanvas overlay if missing (for standalone level testing)
+        CreateFallbackFadeOverlay();
+    }
+
+    private static void CreateFallbackFadeOverlay()
+    {
+        if (s_SharedImage != null || s_SharedCanvasGroup != null) return;
+
+        GameObject canvasGo = new GameObject("Runtime_EnemyFadeCanvas");
+        Canvas canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 9999;
+
+        CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        GameObject imageGo = new GameObject("FadeScreen");
+        imageGo.transform.SetParent(canvasGo.transform, false);
+
+        s_SharedImage = imageGo.AddComponent<Image>();
+        SetupFadeImageProperties(s_SharedImage);
+        s_SharedImage.color = new Color(0f, 0f, 0f, 0f);
+        imageGo.SetActive(false);
+    }
+
+    private static void SetupFadeImageProperties(Image img)
+    {
+        if (img == null) return;
+        img.sprite = null;
+        img.type = Image.Type.Simple;
+        img.raycastTarget = false;
+        img.color = new Color(0f, 0f, 0f, img.color.a);
+
+        RectTransform rt = img.rectTransform;
+        if (rt != null)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.offsetMin = new Vector2(-200f, -200f);
+            rt.offsetMax = new Vector2(200f, 200f);
         }
     }
 
@@ -514,20 +562,32 @@ public class EnemyDetection : MonoBehaviour
         if (KKK.UI.PauseMenuController.Instance != null)
         {
             KKK.UI.PauseMenuController.SetDetectionFade(alpha);
-            return;
         }
 
         ResolveSharedFadeScreen();
 
+        bool isVisible = alpha > 0.001f;
+
         if (s_SharedCanvasGroup != null)
         {
+            if (s_SharedCanvasGroup.gameObject.activeSelf != isVisible)
+            {
+                s_SharedCanvasGroup.gameObject.SetActive(isVisible);
+            }
             s_SharedCanvasGroup.alpha = alpha;
-            s_SharedCanvasGroup.blocksRaycasts = alpha > 0.05f;
+            s_SharedCanvasGroup.blocksRaycasts = (alpha > 0.05f);
         }
 
         if (s_SharedImage != null)
         {
+            if (s_SharedImage.gameObject.activeSelf != isVisible)
+            {
+                s_SharedImage.gameObject.SetActive(isVisible);
+            }
             Color c = s_SharedImage.color;
+            c.r = 0f;
+            c.g = 0f;
+            c.b = 0f;
             c.a = alpha;
             s_SharedImage.color = c;
         }

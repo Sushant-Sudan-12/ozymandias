@@ -93,6 +93,7 @@ namespace KKK.UI
             EnsureCanvasSorting();
             EnsureEventSystem();
             ResolveFadeScreenComponents();
+            UpdateCursorState();
 
             if (autoFadeInOnSceneLoad)
             {
@@ -111,15 +112,21 @@ namespace KKK.UI
                 {
                     Time.timeScale = 1f;
                 }
+
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
         }
 
         private void Update()
         {
             string currentScene = SceneManager.GetActiveScene().name;
-            if (currentScene.Equals(mainMenuSceneName, StringComparison.OrdinalIgnoreCase))
+            if (currentScene.Equals(mainMenuSceneName, StringComparison.OrdinalIgnoreCase) ||
+                currentScene.IndexOf("MainMenu", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 if (_isPaused) SetPaused(false);
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
                 return;
             }
 
@@ -136,6 +143,7 @@ namespace KKK.UI
             ResolveFadeScreenComponents();
 
             SetPaused(false);
+            UpdateCursorState();
 
             if (autoFadeInOnSceneLoad)
             {
@@ -158,21 +166,62 @@ namespace KKK.UI
                 }
             }
 
-            if (fadeScreenImage == null && fadeScreenCanvasGroup != null)
+            if (fadeScreenImage == null)
             {
-                fadeScreenImage = fadeScreenCanvasGroup.GetComponent<Image>();
+                if (fadeScreenCanvasGroup != null)
+                {
+                    fadeScreenImage = fadeScreenCanvasGroup.GetComponent<Image>();
+                }
+                else
+                {
+                    var imgList = GetComponentsInChildren<Image>(true);
+                    for (int i = 0; i < imgList.Length; i++)
+                    {
+                        if (imgList[i].gameObject.name.IndexOf("fade", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            fadeScreenImage = imgList[i];
+                            break;
+                        }
+                    }
+                }
             }
 
-            // Ensure raycast target is disabled on the Image component directly
+            // Ensure the FadeScreen Image is a solid flat color (NO rounded corner sprites)
             if (fadeScreenImage != null)
             {
+                fadeScreenImage.sprite = null;
+                fadeScreenImage.type = Image.Type.Simple;
+                fadeScreenImage.color = new Color(0f, 0f, 0f, fadeScreenImage.color.a);
                 fadeScreenImage.raycastTarget = false;
+
+                // Stretch RectTransform with generous overscan (+200px) to guarantee full screen on any resolution
+                RectTransform rt = fadeScreenImage.rectTransform;
+                if (rt != null)
+                {
+                    rt.anchorMin = Vector2.zero;
+                    rt.anchorMax = Vector2.one;
+                    rt.pivot = new Vector2(0.5f, 0.5f);
+                    rt.anchoredPosition = Vector2.zero;
+                    rt.offsetMin = new Vector2(-200f, -200f);
+                    rt.offsetMax = new Vector2(200f, 200f);
+                }
             }
 
             if (fadeScreenCanvasGroup != null)
             {
                 fadeScreenCanvasGroup.blocksRaycasts = false;
                 fadeScreenCanvasGroup.interactable = false;
+
+                RectTransform rt = fadeScreenCanvasGroup.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = Vector2.zero;
+                    rt.anchorMax = Vector2.one;
+                    rt.pivot = new Vector2(0.5f, 0.5f);
+                    rt.anchoredPosition = Vector2.zero;
+                    rt.offsetMin = new Vector2(-200f, -200f);
+                    rt.offsetMax = new Vector2(200f, 200f);
+                }
             }
         }
 
@@ -265,9 +314,9 @@ namespace KKK.UI
             {
                 EnsureCanvasSorting();
                 EnsureEventSystem();
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
             }
+
+            UpdateCursorState();
 
             if (pauseMenuPanel != null)
             {
@@ -281,14 +330,41 @@ namespace KKK.UI
             OnPauseStateChanged?.Invoke(_isPaused);
         }
 
+        public void UpdateCursorState()
+        {
+            string currentScene = SceneManager.GetActiveScene().name;
+            bool isMainMenu = currentScene.Equals(mainMenuSceneName, StringComparison.OrdinalIgnoreCase) ||
+                              currentScene.IndexOf("MainMenu", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isMainMenu || _isPaused)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
         #region Fade & Scene Transition System
         /// <summary>
         /// Applies detection alpha from enemy detection to the shared FadeScreen.
-        /// Ignored if a scene transition fade is currently active.
+        /// Ignored only if a scene transition fade is currently loading another scene.
         /// </summary>
         public static void SetDetectionFade(float alpha)
         {
-            if (Instance == null || Instance._isTransitioning) return;
+            if (Instance == null) return;
+            if (Instance._isTransitioning) return;
+
+            // If an enemy spots the player, stop any non-essential idle fade coroutine
+            if (alpha > 0.001f && Instance._fadeCoroutine != null && !Instance._isTransitioning)
+            {
+                Instance.StopCoroutine(Instance._fadeCoroutine);
+                Instance._fadeCoroutine = null;
+            }
+
             Instance.ApplyAlphaDirect(alpha);
         }
 
@@ -316,6 +392,9 @@ namespace KKK.UI
                 }
 
                 Color c = fadeScreenImage.color;
+                c.r = 0f;
+                c.g = 0f;
+                c.b = 0f;
                 c.a = alpha;
                 fadeScreenImage.color = c;
                 fadeScreenImage.raycastTarget = false;
@@ -364,6 +443,7 @@ namespace KKK.UI
             // 3. Fade In from black
             yield return FadeRoutine(1f, 0f, halfDuration);
             _isTransitioning = false;
+            _fadeCoroutine = null;
         }
 
         /// <summary>
@@ -372,7 +452,15 @@ namespace KKK.UI
         public void FadeIn(float duration)
         {
             if (_fadeCoroutine != null) StopCoroutine(_fadeCoroutine);
-            _fadeCoroutine = StartCoroutine(FadeRoutine(1f, 0f, duration));
+            _fadeCoroutine = StartCoroutine(FadeInRoutine(duration));
+        }
+
+        private IEnumerator FadeInRoutine(float duration)
+        {
+            _isTransitioning = true;
+            yield return FadeRoutine(1f, 0f, duration);
+            _isTransitioning = false;
+            _fadeCoroutine = null;
         }
 
         /// <summary>
@@ -389,6 +477,8 @@ namespace KKK.UI
             _isTransitioning = true;
             yield return FadeRoutine(0f, 1f, duration);
             onComplete?.Invoke();
+            _isTransitioning = false;
+            _fadeCoroutine = null;
         }
 
         private IEnumerator FadeRoutine(float startAlpha, float targetAlpha, float duration)
