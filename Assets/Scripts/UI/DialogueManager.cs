@@ -97,6 +97,9 @@ namespace KKK.UI
         {
             if (!_isOpen) return;
 
+            bool isPaused = Time.timeScale <= 0f || (PauseMenuController.Instance != null && PauseMenuController.Instance.IsPaused);
+            if (isPaused) return;
+
             // Check advance keys (Space, Enter, E)
             for (int i = 0; i < advanceKeys.Length; i++)
             {
@@ -268,6 +271,11 @@ namespace KKK.UI
 
             for (int i = 0; i <= fullText.Length; i++)
             {
+                while (Time.timeScale <= 0f || (PauseMenuController.Instance != null && PauseMenuController.Instance.IsPaused))
+                {
+                    yield return null;
+                }
+
                 SetDialogueBodyText(fullText.Substring(0, i));
                 yield return new WaitForSecondsRealtime(delay);
             }

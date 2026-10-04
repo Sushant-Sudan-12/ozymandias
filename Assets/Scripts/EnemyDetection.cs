@@ -114,10 +114,21 @@ public class EnemyDetection : MonoBehaviour
 
     [Header("Detection Timer & Screen Fade")]
     [Tooltip("Continuous sight duration (in seconds) before full detection and player death. (FadeScreen transitions 0 to 1 over this time).")]
-    [SerializeField] private float detectionTimeRequired = 2.0f;
+    [SerializeField] private float detectionTimeRequired = 1.5f;
 
     [Tooltip("Whether to reload the active scene upon player death.")]
     [SerializeField] private bool reloadSceneOnDeath = true;
+
+    [Header("Enemy Chase Audio")]
+    [Tooltip("Sound played while this enemy is sensing / chasing the player during the detection window (e.g. 1.5s).")]
+    [SerializeField] private AudioClip enemyChaseSound;
+
+    [Range(0f, 1f)]
+    [Tooltip("Volume slider for the enemy chase sound.")]
+    [SerializeField] private float enemyChaseVolume = 1.0f;
+
+    [Tooltip("AudioSource component used to play the chase sound. Auto-created if unassigned.")]
+    [SerializeField] private AudioSource chaseAudioSource;
 
     [Header("Player Chase (When Moving Enemy is Detected)")]
     [Tooltip("Chase speed when player is detected (faster than normal patrol speed). Ignored if isStationary is true.")]
@@ -235,6 +246,7 @@ public class EnemyDetection : MonoBehaviour
 
     private void OnDisable()
     {
+        StopChaseAudio();
         s_ActiveEnemies.Remove(this);
         if (s_ActiveEnemies.Count == 0)
         {
@@ -272,6 +284,7 @@ public class EnemyDetection : MonoBehaviour
         _stuckSamplePosition = transform.position;
         _stuckTimer = 0f;
 
+        InitializeChaseAudioSource();
         EnsurePlayerReference();
         ResolveSharedFadeScreen();
     }
@@ -331,6 +344,8 @@ public class EnemyDetection : MonoBehaviour
                 Debug.Log("Player detected");
                 OnPlayerDetected?.Invoke();
             }
+
+            PlayChaseAudio();
         }
         else
         {
@@ -344,6 +359,8 @@ public class EnemyDetection : MonoBehaviour
 
             _currentDetectionTimer = 0f;
             OnDetectionProgressChanged?.Invoke(0f);
+
+            StopChaseAudio();
         }
     }
 
@@ -375,15 +392,14 @@ public class EnemyDetection : MonoBehaviour
             }
         }
 
-        // Case 1: At least one enemy sees the player -> Fade screen 0 to 1 over detectionTimeRequired seconds
+        // Case 1: At least one enemy sees the player -> Fade screen starts immediately and tracks detection progress
         if (maxProgress > 0.001f)
         {
-            float fadeRate = shortestDuration > 0f ? (1f / shortestDuration) : 10f;
-            s_CurrentGlobalScreenAlpha = Mathf.MoveTowards(s_CurrentGlobalScreenAlpha, maxProgress, fadeRate * Time.deltaTime);
+            s_CurrentGlobalScreenAlpha = maxProgress;
             ApplyFadeAlpha(s_CurrentGlobalScreenAlpha);
 
-            // Full detection reached (2 seconds / 1.0 alpha) -> Player dies & scene reloads
-            if (maxProgress >= 0.999f && s_CurrentGlobalScreenAlpha >= 0.98f && !s_IsReloadingScene)
+            // Full detection reached (e.g. 1.5s / 1.0 alpha) -> Player dies & scene reloads
+            if (maxProgress >= 0.999f && !s_IsReloadingScene)
             {
                 s_IsReloadingScene = true;
                 ApplyFadeAlpha(1f);
@@ -400,6 +416,49 @@ public class EnemyDetection : MonoBehaviour
         {
             s_CurrentGlobalScreenAlpha = 0f;
             ApplyFadeAlpha(0f);
+        }
+    }
+
+    private void InitializeChaseAudioSource()
+    {
+        if (chaseAudioSource == null)
+        {
+            chaseAudioSource = GetComponent<AudioSource>();
+            if (chaseAudioSource == null)
+            {
+                chaseAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+
+        chaseAudioSource.playOnAwake = false;
+        chaseAudioSource.loop = true;
+        chaseAudioSource.spatialBlend = 0f; // 2D audio for clear chase tension
+    }
+
+    private void PlayChaseAudio()
+    {
+        if (enemyChaseSound == null) return;
+        if (chaseAudioSource == null) InitializeChaseAudioSource();
+
+        if (chaseAudioSource.clip != enemyChaseSound)
+        {
+            chaseAudioSource.clip = enemyChaseSound;
+        }
+
+        chaseAudioSource.loop = true;
+        chaseAudioSource.volume = enemyChaseVolume;
+
+        if (!chaseAudioSource.isPlaying)
+        {
+            chaseAudioSource.Play();
+        }
+    }
+
+    private void StopChaseAudio()
+    {
+        if (chaseAudioSource != null && chaseAudioSource.isPlaying)
+        {
+            chaseAudioSource.Stop();
         }
     }
 

@@ -271,6 +271,10 @@ namespace KKK.UI
 
             if (pauseMenuPanel != null)
             {
+                if (_isPaused)
+                {
+                    pauseMenuPanel.transform.SetAsLastSibling();
+                }
                 pauseMenuPanel.SetActive(_isPaused);
             }
 

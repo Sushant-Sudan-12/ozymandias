@@ -1,0 +1,129 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5657039740902761368
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8135178270048975228}
+  - component: {fileID: 1928219248050799571}
+  m_Layer: 0
+  m_Name: SceneDialgues
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8135178270048975228
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5657039740902761368}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1642.6814, y: 133.12755, z: -51.49358}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1928219248050799571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5657039740902761368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KKK.SceneDialogueController
+  playDialogueOnSceneEnter: 1
+  dontReplayOnDeathRespawn: 1
+  enterDialogueDelay: 0.5
+  onSceneEnterDialogue:
+    dialogueId: LevelEnter
+    lines:
+    - speakerName: OZZY
+      text: 'Bugs  bugs so many bugs '
+      portrait: {fileID: 116358206117913375, guid: d0c2c08b464321348ae0f1a003f58758, type: 3}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: OZZY
+      text: Hope one of them becums me friand
+      portrait: {fileID: 116358206117913375, guid: d0c2c08b464321348ae0f1a003f58758, type: 3}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    onComplete:
+      m_PersistentCalls:
+        m_Calls: []
+  onSceneFinishDialogue:
+    dialogueId: LevelFinish
+    lines:
+    - speakerName: '?'
+      text: You are green as they come, what do they call you child?
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: OZZY
+      text: Ozzy.
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: '?'
+      text: What Serendipity, My name is Ozymandias, King of Kings and ruler of time
+        and you shall be my herald to bring dawn of your time.
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: OZZY
+      text: Sere-  what, Ozzy doesn't know that.
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: '?'
+      text: 'Ozymandias, you shall call me. '
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: OZZY
+      text: ' Mandy?'
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: '?'
+      text: ......... ozymandias you prutrid infant
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: OZZY
+      text: . . . . . . Mandy?
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: MANDY
+      text: Mandy it shall be then
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    - speakerName: '?'
+      text: 'ozyma..... never mind '
+      portrait: {fileID: 0}
+      typingSpeed: 0
+      voiceClip: {fileID: 0}
+    onComplete:
+      m_PersistentCalls:
+        m_Calls: []
+  customDialogues: []
+  onEnterDialogueFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  onFinishDialogueFinished:
+    m_PersistentCalls:
+      m_Calls: []

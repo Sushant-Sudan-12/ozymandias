@@ -7981,98 +7981,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1151912549
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1151912551}
-  - component: {fileID: 1151912550}
-  - component: {fileID: 1151912552}
-  m_Layer: 0
-  m_Name: DialogueTrigger
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!65 &1151912550
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1151912549}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.7044659, y: 0.63736737, z: 2.231739}
-  m_Center: {x: -0.063715935, y: -0.18131632, z: 0.6158695}
---- !u!4 &1151912551
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1151912549}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -27.32268, y: 0.37561, z: 11.83}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1151912552
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1151912549}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KKK.DialogueTriggerZone
-  dialogueSequence:
-    dialogueId: ZoneDialogue
-    lines:
-    - speakerName: God
-      text: Why are you gay?
-      portrait: {fileID: 116358206117913375, guid: d0c2c08b464321348ae0f1a003f58758, type: 3}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    - speakerName: Goblin
-      text: Who says Im gay
-      portrait: {fileID: 2385257850231646474, guid: 06730aa18d34ae44e9e08bb6e0963a67, type: 3}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    onComplete:
-      m_PersistentCalls:
-        m_Calls: []
-  sceneDialogueId: 
-  triggerOnlyOnce: 1
-  dontReplayOnDeathRespawn: 1
-  triggerDelay: 0
-  onDialogueTriggered:
-    m_PersistentCalls:
-      m_Calls: []
-  onDialogueCompleted:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &1156772380
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8460,87 +8368,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: bba78ccc25a671b41a8dae00a18300c2, type: 3}
   m_PrefabInstance: {fileID: 952360502}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1214052059
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1214052060}
-  - component: {fileID: 1214052061}
-  m_Layer: 0
-  m_Name: SceneDialgues
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1214052060
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1214052059}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1642.6814, y: 133.12755, z: -51.49358}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1214052061
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1214052059}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KKK.SceneDialogueController
-  playDialogueOnSceneEnter: 1
-  dontReplayOnDeathRespawn: 1
-  enterDialogueDelay: 0.5
-  onSceneEnterDialogue:
-    dialogueId: LevelEnter
-    lines:
-    - speakerName: God
-      text: You are so gay
-      portrait: {fileID: 116358206117913375, guid: d0c2c08b464321348ae0f1a003f58758, type: 3}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    - speakerName: Gay
-      text: You think I dont know that
-      portrait: {fileID: 2385257850231646474, guid: 06730aa18d34ae44e9e08bb6e0963a67, type: 3}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    onComplete:
-      m_PersistentCalls:
-        m_Calls: []
-  onSceneFinishDialogue:
-    dialogueId: LevelFinish
-    lines:
-    - speakerName: Gay
-      text: Gayer
-      portrait: {fileID: 0}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    onComplete:
-      m_PersistentCalls:
-        m_Calls: []
-  customDialogues: []
-  onEnterDialogueFinished:
-    m_PersistentCalls:
-      m_Calls: []
-  onFinishDialogueFinished:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &1216656872 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6624009824008355890, guid: ad9addb4afca5ff4189568a1e5111eb6, type: 3}
@@ -13681,98 +13508,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6624009824008355890, guid: ad9addb4afca5ff4189568a1e5111eb6, type: 3}
   m_PrefabInstance: {fileID: 1009072647}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1931876526
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1931876529}
-  - component: {fileID: 1931876528}
-  - component: {fileID: 1931876527}
-  m_Layer: 0
-  m_Name: DialogueTrigger (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1931876527
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1931876526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::KKK.DialogueTriggerZone
-  dialogueSequence:
-    dialogueId: ZoneDialogue1
-    lines:
-    - speakerName: 1
-      text: Why are you gay?
-      portrait: {fileID: 116358206117913375, guid: d0c2c08b464321348ae0f1a003f58758, type: 3}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    - speakerName: 2
-      text: Who says Im gay
-      portrait: {fileID: 2385257850231646474, guid: 06730aa18d34ae44e9e08bb6e0963a67, type: 3}
-      typingSpeed: 0
-      voiceClip: {fileID: 0}
-    onComplete:
-      m_PersistentCalls:
-        m_Calls: []
-  sceneDialogueId: 
-  triggerOnlyOnce: 1
-  dontReplayOnDeathRespawn: 1
-  triggerDelay: 0
-  onDialogueTriggered:
-    m_PersistentCalls:
-      m_Calls: []
-  onDialogueCompleted:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!65 &1931876528
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1931876526}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.7044659, y: 0.63736737, z: 2.231739}
-  m_Center: {x: -0.063715935, y: -0.18131632, z: 0.6158695}
---- !u!4 &1931876529
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1931876526}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -29.74, y: 0.37561, z: 11.83}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1932764700 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7714314824990807358, guid: 4cdebe6f3370c7846b6c4613061a1661, type: 3}
@@ -15434,6 +15169,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: eed21c525d0833c40b702ecac4647acf, type: 3}
+--- !u!1001 &1341448442365164427
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5657039740902761368, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_Name
+      value: SceneDialgues
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1642.6814
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 133.12755
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -51.49358
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8135178270048975228, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
 --- !u!1001 &5146879200590618817
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15556,6 +15348,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c3de9c3e89520684dbf244dfefe26358, type: 3}
+--- !u!1001 &9130322336299157625
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -27.32268
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.37561
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 11.83
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3625821375098583463, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6552562486886751560, guid: adad55824a942084686304b30e5c2004, type: 3}
+      propertyPath: m_Name
+      value: DialogueTrigger
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: adad55824a942084686304b30e5c2004, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -15568,12 +15417,11 @@ SceneRoots:
   - {fileID: 1700857734}
   - {fileID: 647288230}
   - {fileID: 7769268057948243510}
-  - {fileID: 1214052060}
+  - {fileID: 1341448442365164427}
   - {fileID: 291760479}
   - {fileID: 353549662}
   - {fileID: 5146879200590618817}
-  - {fileID: 1151912551}
-  - {fileID: 1931876529}
+  - {fileID: 9130322336299157625}
   - {fileID: 43720313}
   - {fileID: 98703227}
   - {fileID: 1959162986}
