@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using KKK.Audio;
 
 namespace KKK.UI
 {
@@ -163,9 +164,16 @@ namespace KKK.UI
 
         private void PlayClickSound()
         {
-            if (buttonClickAudio != null && audioSource != null)
+            if (buttonClickAudio != null)
             {
-                audioSource.PlayOneShot(buttonClickAudio);
+                if (audioSource != null)
+                {
+                    audioSource.PlayOneShot(buttonClickAudio);
+                }
+                else if (AudioPersistentManager.Instance != null)
+                {
+                    AudioPersistentManager.Instance.PlaySFX(buttonClickAudio);
+                }
             }
         }
 
