@@ -16279,6 +16279,14 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: onSceneFinishDialogue.lines.Array.data[8].text
+      value: 'ozyma..... never mind '
+      objectReference: {fileID: 0}
+    - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: onSceneFinishDialogue.lines.Array.data[9].text
+      value: Mandy it shall be then
+      objectReference: {fileID: 0}
+    - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
       propertyPath: onSceneEnterDialogue.lines.Array.data[0].portrait
       value: 
       objectReference: {fileID: -3630445132008015895, guid: c3de7ca0a4cd6a94b919e8adfac7514f, type: 3}
@@ -16321,7 +16329,19 @@ PrefabInstance:
     - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
       propertyPath: onSceneFinishDialogue.lines.Array.data[8].portrait
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: onSceneFinishDialogue.lines.Array.data[9].portrait
+      value: 
       objectReference: {fileID: -6622881794113336343, guid: 98b8398e95729d14aa91ed4596446a7d, type: 3}
+    - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: onSceneFinishDialogue.lines.Array.data[8].speakerName
+      value: '?'
+      objectReference: {fileID: 0}
+    - target: {fileID: 1928219248050799571, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
+      propertyPath: onSceneFinishDialogue.lines.Array.data[9].speakerName
+      value: MANDY
+      objectReference: {fileID: 0}
     - target: {fileID: 5657039740902761368, guid: 2fde870daa20e0242ae8978f46c59985, type: 3}
       propertyPath: m_Name
       value: SceneDialgues

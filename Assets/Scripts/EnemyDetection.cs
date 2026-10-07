@@ -296,6 +296,25 @@ public class EnemyDetection : MonoBehaviour
 
     private void Update()
     {
+        bool isPaused = Time.timeScale <= 0f || (KKK.UI.PauseMenuController.Instance != null && KKK.UI.PauseMenuController.Instance.IsPaused);
+        bool isDialogueActive = KKK.UI.DialogueManager.Instance != null && KKK.UI.DialogueManager.Instance.IsDialogueActive;
+
+        if (isPaused || isDialogueActive)
+        {
+            StopChaseAudio();
+
+            if (isDialogueActive)
+            {
+                _isPlayerInSight = false;
+                _currentDetectionTimer = 0f;
+                _isPlayerDetected = false;
+                OnDetectionProgressChanged?.Invoke(0f);
+            }
+
+            ApplyPhysicsMovement(Vector3.zero);
+            return;
+        }
+
         if (!playerTarget)
         {
             EnsurePlayerReference();
@@ -310,6 +329,19 @@ public class EnemyDetection : MonoBehaviour
 
     private void LateUpdate()
     {
+        bool isPaused = Time.timeScale <= 0f || (KKK.UI.PauseMenuController.Instance != null && KKK.UI.PauseMenuController.Instance.IsPaused);
+        bool isDialogueActive = KKK.UI.DialogueManager.Instance != null && KKK.UI.DialogueManager.Instance.IsDialogueActive;
+
+        if (isPaused || isDialogueActive)
+        {
+            if (isDialogueActive && s_CurrentGlobalScreenAlpha > 0f)
+            {
+                s_CurrentGlobalScreenAlpha = 0f;
+                ApplyFadeAlpha(0f);
+            }
+            return;
+        }
+
         // 3. Central Coordinator: The primary active enemy coordinates the shared screen fade
         CoordinateSharedScreenFade();
     }
@@ -1443,32 +1475,56 @@ public class EnemyDetection : MonoBehaviour
 
     private void ApplyPhysicsMovement(Vector3 moveVelocity)
     {
+        bool isPaused = Time.timeScale <= 0f || (KKK.UI.PauseMenuController.Instance != null && KKK.UI.PauseMenuController.Instance.IsPaused);
+        bool isDialogueActive = KKK.UI.DialogueManager.Instance != null && KKK.UI.DialogueManager.Instance.IsDialogueActive;
+
+        if (isPaused || isDialogueActive)
+        {
+            moveVelocity = Vector3.zero;
+        }
+
         if (_controller != null)
         {
-            if (_controller.isGrounded)
+            if (isPaused || isDialogueActive)
             {
-                _verticalVelocity.y = -1f;
+                // Freeze character controller displacement while in dialogue or paused
             }
             else
             {
-                _verticalVelocity.y -= gravity * Time.deltaTime;
-            }
+                if (_controller.isGrounded)
+                {
+                    _verticalVelocity.y = -1f;
+                }
+                else
+                {
+                    _verticalVelocity.y -= gravity * Time.deltaTime;
+                }
 
-            Vector3 finalMove = (moveVelocity + _verticalVelocity) * Time.deltaTime;
-            _controller.Move(finalMove);
+                Vector3 finalMove = (moveVelocity + _verticalVelocity) * Time.deltaTime;
+                _controller.Move(finalMove);
+            }
         }
         else
         {
-            transform.position += moveVelocity * Time.deltaTime;
+            if (!isPaused && !isDialogueActive)
+            {
+                transform.position += moveVelocity * Time.deltaTime;
+            }
         }
 
         // Update optional 3D Animator parameters
         if (animator != null)
         {
-            float flatSpeed = new Vector3(moveVelocity.x, 0f, moveVelocity.z).magnitude;
+            float flatSpeed = (isPaused || isDialogueActive) ? 0f : new Vector3(moveVelocity.x, 0f, moveVelocity.z).magnitude;
             animator.SetFloat(SpeedHash, flatSpeed);
             animator.SetBool(IsMovingHash, flatSpeed > 0.05f);
-            animator.SetBool(IsChasingHash, _currentState == EnemyState.ChasingPlayer);
+            animator.SetBool(IsChasingHash, !isPaused && !isDialogueActive && _currentState == EnemyState.ChasingPlayer && flatSpeed > 0.05f);
+        }
+
+        var animEntity = GetComponent<DirectionalAnimationEntity>();
+        if (animEntity != null)
+        {
+            animEntity.SetMovement((isPaused || isDialogueActive) ? Vector3.zero : moveVelocity);
         }
     }
 

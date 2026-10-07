@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
@@ -85,17 +86,43 @@ namespace KKK.UI
             }
         }
 
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
         private void OnDestroy()
         {
             if (Instance == this)
             {
+                SceneManager.sceneLoaded -= HandleSceneLoaded;
                 Instance = null;
             }
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // Close any lingering dialogue cleanly whenever any new scene loads (e.g. MainMenu or Level Reload)
+            CloseDialogueBox(false);
         }
 
         private void Update()
         {
             if (!_isOpen) return;
+
+            // If we are currently in MainMenu scene, ensure dialogue is immediately dismissed
+            string currentScene = SceneManager.GetActiveScene().name;
+            if (currentScene.Equals("MainMenu", StringComparison.OrdinalIgnoreCase) ||
+                currentScene.IndexOf("MainMenu", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                CloseDialogueBox(false);
+                return;
+            }
 
             bool isPaused = Time.timeScale <= 0f || (PauseMenuController.Instance != null && PauseMenuController.Instance.IsPaused);
             if (isPaused) return;
@@ -170,6 +197,23 @@ namespace KKK.UI
             Instance.StartDialogue(seq, onComplete);
         }
 
+        /// <summary>
+        /// Immediately stops and closes any active dialogue sequence without triggering callbacks.
+        /// Used when returning to MainMenu, restarting, or transitioning levels.
+        /// </summary>
+        public void StopDialogue()
+        {
+            CloseDialogueBox(false);
+        }
+
+        /// <summary>
+        /// Closes dialogue, optionally invoking the completion callback.
+        /// </summary>
+        public void EndDialogue(bool invokeCallback = false)
+        {
+            CloseDialogueBox(invokeCallback);
+        }
+
         private void OpenDialogueBox()
         {
             _isOpen = true;
@@ -186,15 +230,19 @@ namespace KKK.UI
             OnDialogueStarted?.Invoke();
         }
 
-        private void CloseDialogueBox()
+        private void CloseDialogueBox(bool invokeCallback = true)
         {
             _isOpen = false;
+            _isTyping = false;
+
             if (_typewriterCoroutine != null)
             {
                 StopCoroutine(_typewriterCoroutine);
                 _typewriterCoroutine = null;
             }
-            _isTyping = false;
+
+            _linesQueue.Clear();
+            _currentLine = null;
 
             if (dialoguePanel != null)
             {
@@ -210,7 +258,10 @@ namespace KKK.UI
 
             var cb = _onSequenceComplete;
             _onSequenceComplete = null;
-            cb?.Invoke();
+            if (invokeCallback)
+            {
+                cb?.Invoke();
+            }
         }
 
         private void DisplayNextLine()

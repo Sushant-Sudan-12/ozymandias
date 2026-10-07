@@ -83,6 +83,11 @@ namespace KKK
         {
             if (_hasTeleported) return;
 
+            bool isPaused = Time.timeScale <= 0f || (PauseMenuController.Instance != null && PauseMenuController.Instance.IsPaused);
+            bool isDialogueActive = DialogueManager.Instance != null && DialogueManager.Instance.IsDialogueActive;
+
+            if (isPaused || isDialogueActive) return;
+
             if (_isPlayerInside)
             {
                 // Accumulate charging time

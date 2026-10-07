@@ -145,6 +145,11 @@ namespace KKK.UI
             SetPaused(false);
             UpdateCursorState();
 
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
+
             if (autoFadeInOnSceneLoad)
             {
                 FadeIn(defaultTransitionDuration);
@@ -295,6 +300,10 @@ namespace KKK.UI
         public void RestartLevel()
         {
             SetPaused(false);
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
             Scene activeScene = SceneManager.GetActiveScene();
             LoadSceneWithFade(activeScene.name, defaultTransitionDuration);
         }
@@ -302,6 +311,10 @@ namespace KKK.UI
         public void LoadMainMenu()
         {
             SetPaused(false);
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
             LoadSceneWithFade(mainMenuSceneName, defaultTransitionDuration);
         }
 

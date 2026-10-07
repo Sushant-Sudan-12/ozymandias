@@ -42,6 +42,11 @@ namespace KKK.UI
 
             EnsureEventSystem();
 
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
+
             if (newGameButton == null || quitButton == null)
             {
                 BuildMainMenuUI();
@@ -57,6 +62,11 @@ namespace KKK.UI
 
         private void Start()
         {
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
+
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             RefreshContinueButtonVisibility();
@@ -114,6 +124,11 @@ namespace KKK.UI
             if (_isLoading) return;
             _isLoading = true;
 
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
+
             string targetScene = GameProgressTracker.GetLastPlayedScene();
             PlayClickSound();
 
@@ -134,6 +149,11 @@ namespace KKK.UI
         {
             if (_isLoading) return;
             _isLoading = true;
+
+            if (DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StopDialogue();
+            }
 
             // Reset dialogue history so opening dialogues play for the new adventure
             SceneDialogueController.ResetDialogueHistory();
